@@ -9,6 +9,7 @@ import re
 import time
 import hmac
 import hashlib
+import urllib.request
 import logging
 import asyncio
 from typing import Optional
@@ -69,6 +70,15 @@ BASE = lambda: STREAM_BASE_URL or f"http://localhost:{STREAM_PORT}"
 
 
 # ══════════════════════════════════════════════════════════════
+# ROOT / — Render health check (prevents port-detection restart)
+# ══════════════════════════════════════════════════════════════
+
+@app.get("/")
+async def root():
+    return JSONResponse({"service": "TG Stream Server", "status": "running", "docs": "/health"})
+
+
+# ══════════════════════════════════════════════════════════════
 # STARTUP / SHUTDOWN
 # ══════════════════════════════════════════════════════════════
 
@@ -80,13 +90,34 @@ async def startup():
         for e in errors:
             logger.error(f"Config error: {e}")
         return
+
+    # ── Step 1: Delete any existing Bot API webhook ────────
+    # If a webhook was set previously, Telegram won't deliver
+    # updates via MTProto until the webhook is removed.
+    try:
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook?drop_pending_updates=false"
+        req = urllib.request.Request(url, method="GET")
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            result = resp.read().decode()
+            logger.info(f"Webhook cleanup: {result}")
+    except Exception as e:
+        logger.warning(f"Webhook cleanup failed (non-fatal): {e}")
+
+    # ── Step 2: Register handlers BEFORE start ────────────
+    # Ensures all handlers exist when the dispatcher begins
+    # processing updates — prevents silent drop of messages.
+    _register_bot_handlers()
+
+    # ── Step 3: Start Pyrogram client (MTProto) ───────────
     await tg_client.start()
     streamer = TelegramStreamer(tg_client)
+
+    # ── Step 4: Database ──────────────────────────────────
     try:
         db.ensure_tables()
     except Exception as e:
         logger.warning(f"DB init: {e}")
-    _register_bot_handlers()
+
     me = await tg_client.get_me()
     logger.info(f"✅ Server started | Bot: @{me.username} | MTProto: ON | Port: {STREAM_PORT}")
 
