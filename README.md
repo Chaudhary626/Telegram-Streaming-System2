@@ -10,7 +10,6 @@ Stream videos from Telegram with **NO 20MB limit**. Supports multi-language, mul
 - **Smart Switching** — Changing quality keeps same language and vice versa
 - **Custom Player** — Dark themed, responsive, anti-download
 - **Pre-roll Ads** — VAST or custom HTML support
-- **Admin Panel** — Content, users, ads, and logs management
 - **Embed System** — Single iframe for any website
 - **Bot Commands** — Create content and add sources via Telegram
 
@@ -30,7 +29,7 @@ Browser → /watch/{slug} → Player JS fetches /api/sources/{slug}
 
 - **API_ID + API_HASH**: https://my.telegram.org
 - **BOT_TOKEN**: @BotFather on Telegram
-- **ADMIN_TELEGRAM_ID**: @userinfobot on Telegram
+- 
 
 ### 2. Configure
 
@@ -102,7 +101,7 @@ define('STREAM_SERVER_SECRET', 'same-as-STREAM_SECRET');
 | `GET /api/ads` | JSON: active ads |
 | `GET /stream/{file_id}` | Raw MTProto stream |
 | `GET /health` | Server status |
-| `GET /admin` | Admin panel |
+
 
 ## Admin Panel
 
@@ -146,5 +145,3 @@ Access at `https://your-server/admin`
 | `DB_HOST/NAME/USER/PASS` | ✅ | MySQL credentials |
 | `STREAM_SECRET` | ✅ | Shared secret (64 hex chars) |
 | `STREAM_BASE_URL` | ✅ | Public server URL |
-| `ADMIN_PASSWORD` | ✅ | Admin panel password |
-| `ADMIN_TELEGRAM_ID` | ✅ | Your Telegram user ID |
